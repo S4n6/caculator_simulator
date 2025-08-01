@@ -60,6 +60,8 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       type: "mode",
       className:
         "bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold border border-purple-400 rounded-md shadow-md active:brightness-90",
+      secondaryText: "GRAPH",
+      secondaryTextColor: "text-yellow-400",
     },
     {
       label: "ON",
@@ -455,7 +457,7 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       <button
         key={index}
         onClick={() => onButtonClick(button.value, button.type)}
-        className={`h-12 ${button.className} transition-colors duration-150 flex flex-col items-center justify-center relative`}
+        className={`h-7 sm:h-9 lg:h-11 xl:h-12 ${button.className} transition-colors duration-150 flex flex-col items-center justify-center relative text-xs sm:text-sm lg:text-base`}
         style={{
           gridColumn: button.colSpan ? `span ${button.colSpan}` : "span 1",
           gridRow: button.rowSpan ? `span ${button.rowSpan}` : "span 1",
@@ -463,12 +465,18 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       >
         {button.secondaryText && (
           <span
-            className={`text-xs font-normal ${button.secondaryTextColor} leading-none`}
+            className={`text-xs sm:text-xs font-normal ${button.secondaryTextColor} leading-none`}
           >
             {button.secondaryText}
           </span>
         )}
-        <span className={button.secondaryText ? "text-xs leading-none" : ""}>
+        <span
+          className={
+            button.secondaryText
+              ? "text-xs sm:text-sm leading-none"
+              : "text-xs sm:text-sm"
+          }
+        >
           {button.label}
         </span>
       </button>
@@ -476,9 +484,9 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
   };
 
   return (
-    <div className="bg-slate-700 p-4 rounded-b-3xl">
-      {/* Grid layout thống nhất 6 cột cho tất cả các hàng */}
-      <div className="grid grid-cols-6 gap-2">
+    <div className="bg-slate-700 p-1 sm:p-2 lg:p-2 xl:p-3 rounded-b-3xl">
+      {/* Grid layout thống nhất 6 cột cho tất cả các hàng - responsive */}
+      <div className="grid grid-cols-6 gap-1 sm:gap-1 lg:gap-2">
         {buttons.map((button, index) => renderButton(button, index))}
       </div>
     </div>

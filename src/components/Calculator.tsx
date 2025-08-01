@@ -9,6 +9,7 @@ import {
   formatExpression,
   convertBetweenFractionAndDecimal,
 } from "../utils/calculatorUtils";
+import { compile } from "mathjs";
 
 const Calculator: React.FC = () => {
   const [expression, setExpression] = useState<string>("");
@@ -24,6 +25,15 @@ const Calculator: React.FC = () => {
 
   // Thêm state cho trạng thái máy tính (bật/tắt)
   const [isCalculatorOn, setIsCalculatorOn] = useState<boolean>(true);
+
+  // Thêm state cho chế độ đồ thị
+  const [currentMode, setCurrentMode] = useState<"calculator" | "graph">(
+    "calculator"
+  );
+  const [functionInput, setFunctionInput] = useState<string>("");
+  const [graphPoints, setGraphPoints] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
 
   // Hàm phát âm thanh theo loại nút
   const playSoundForButtonType = useCallback((type: string) => {
@@ -73,18 +83,32 @@ const Calculator: React.FC = () => {
   const turnOffCalculator = useCallback(() => {
     console.log("🔴 Turning OFF calculator");
     setIsCalculatorOn(false);
+
+    // Reset tất cả các chế độ
+    setCurrentMode("calculator");
+    setFunctionInput("");
+    setGraphPoints([]);
+
+    // Reset calculator state
     setExpression("");
     setResult("0");
     setLastAnswer("0");
     setIsNewCalculation(true);
     resetModes();
-    clickSound.playSpecialClick(); // Âm thanh tắt máy
+    clickSound.playSpecialClick();
   }, [resetModes]);
 
   // Hàm bật máy tính
   const turnOnCalculator = useCallback(() => {
     console.log("🟢 Turning ON calculator");
     setIsCalculatorOn(true);
+
+    // Reset tất cả các chế độ về mặc định
+    setCurrentMode("calculator");
+    setFunctionInput("");
+    setGraphPoints([]);
+
+    // Reset calculator state
     setExpression("");
     setResult("0");
     setLastAnswer("0");
@@ -92,6 +116,105 @@ const Calculator: React.FC = () => {
     resetModes();
     clickSound.playSpecialClick(); // Âm thanh bật máy
   }, [resetModes]);
+
+  // Hàm xử lý đồ thị
+  const calculateGraphPoints = useCallback((funcString: string) => {
+    try {
+      console.log("🔧 Original function string:", `"${funcString}"`);
+
+      // Kiểm tra chuỗi hàm số có hợp lệ không
+      if (!funcString || funcString.trim().length === 0) {
+        console.warn("❌ Empty function string");
+        setGraphPoints([]);
+        return;
+      }
+
+      // Chuẩn hóa chuỗi hàm số với các bước chi tiết hơn
+      let normalizedFunc = funcString.trim();
+
+      // Loại bỏ khoảng trắng thừa
+      normalizedFunc = normalizedFunc.replace(/\s+/g, "");
+
+      // Kiểm tra xem có chứa biến x không
+      if (!normalizedFunc.includes("x")) {
+        console.warn("❌ Function must contain variable 'x'");
+        setGraphPoints([]);
+        return;
+      }
+
+      // Giữ nguyên ^ vì mathjs hỗ trợ cả ^ và **
+      // Chỉ thêm * giữa số và biến (2x -> 2*x)
+      normalizedFunc = normalizedFunc.replace(/(\d)([a-zA-Z])/g, "$1*$2");
+
+      // Thêm * giữa biến và số (x2 -> x*2)
+      normalizedFunc = normalizedFunc.replace(/([a-zA-Z])(\d)/g, "$1*$2");
+
+      // Thêm * giữa ) và ( hoặc biến
+      normalizedFunc = normalizedFunc.replace(/\)([a-zA-Z(])/g, ")*$1");
+      normalizedFunc = normalizedFunc.replace(/([a-zA-Z])\(/g, "$1*(");
+
+      console.log("✅ Normalized function:", `"${normalizedFunc}"`);
+
+      // Kiểm tra xem chuỗi đã normalize có hợp lệ không
+      if (normalizedFunc.length === 0) {
+        console.warn("❌ Normalized function is empty");
+        setGraphPoints([]);
+        return;
+      }
+
+      const expr = compile(normalizedFunc);
+      const points: Array<{ x: number; y: number }> = [];
+
+      // Tính toán điểm từ -10 đến 10 với bước 0.1
+      for (let x = -10; x <= 10; x += 0.1) {
+        try {
+          const y = expr.evaluate({ x });
+          if (typeof y === "number" && !isNaN(y) && isFinite(y)) {
+            points.push({ x: Math.round(x * 10) / 10, y });
+          }
+        } catch (error) {
+          // Bỏ qua điểm lỗi
+        }
+      }
+
+      setGraphPoints(points);
+      console.log(
+        `📊 Generated ${points.length} graph points for: ${funcString} -> ${normalizedFunc}`
+      );
+    } catch (error) {
+      console.error("Graph calculation error:", error);
+      console.error(
+        "Error details:",
+        error instanceof Error ? error.message : String(error)
+      );
+      setGraphPoints([]);
+    }
+  }, []);
+
+  const handleCalculateGraph = useCallback(() => {
+    console.log(
+      "🎯 handleCalculateGraph called with functionInput:",
+      functionInput
+    );
+    if (functionInput.trim()) {
+      calculateGraphPoints(functionInput);
+    } else {
+      console.log("❌ No function input to calculate");
+    }
+  }, [functionInput, calculateGraphPoints]);
+
+  const toggleGraphMode = useCallback(() => {
+    if (currentMode === "calculator") {
+      setCurrentMode("graph");
+      setFunctionInput("x^2"); // Sử dụng ^ vì mathjs hiểu cả ^ và **
+      calculateGraphPoints("x^2");
+    } else {
+      setCurrentMode("calculator");
+      setFunctionInput("");
+      setGraphPoints([]);
+    }
+    resetModes();
+  }, [currentMode, resetModes, calculateGraphPoints]);
 
   // Xử lý khi nhấn nút với logic SHIFT/ALPHA
   const handleButtonClick = useCallback(
@@ -112,7 +235,17 @@ const Calculator: React.FC = () => {
         if (!isCalculatorOn) {
           turnOnCalculator();
         } else {
-          console.log("🔄 ON button acting as AC (clear)");
+          console.log("🔄 ON button acting as AC (clear) and exit modes");
+
+          // Thoát khỏi tất cả các chế độ đặc biệt
+          if (currentMode === "graph") {
+            setCurrentMode("calculator");
+            setFunctionInput("");
+            setGraphPoints([]);
+            console.log("📤 Exited graph mode");
+          }
+
+          // Reset máy tính về trạng thái ban đầu
           setExpression("");
           setResult("0");
           setIsNewCalculation(true);
@@ -139,7 +272,14 @@ const Calculator: React.FC = () => {
       }
 
       if (value === "mode") {
-        resetModes();
+        if (isShiftActive) {
+          // SHIFT + MODE = chuyển đổi graph mode
+          toggleGraphMode();
+          resetModes(); // Tắt SHIFT sau khi thực hiện
+        } else {
+          // MODE bình thường = reset chế độ
+          resetModes();
+        }
         return;
       }
 
@@ -165,20 +305,36 @@ const Calculator: React.FC = () => {
       // Xử lý bình thường
       switch (type) {
         case "number":
-          handleNumberInput(value);
+          if (currentMode === "graph") {
+            handleGraphNumberInput(value);
+          } else {
+            handleNumberInput(value);
+          }
           break;
         case "operator":
-          handleOperatorInput(value);
+          if (currentMode === "graph") {
+            handleGraphOperatorInput(value);
+          } else {
+            handleOperatorInput(value);
+          }
           break;
         case "function":
         case "scientific_function_top_row":
         case "scientific_function_trig_row":
-          handleFunctionInput(value);
+          if (currentMode === "graph") {
+            handleGraphFunctionInput(value);
+          } else {
+            handleFunctionInput(value);
+          }
           break;
         case "special":
         case "control":
         case "mode":
-          handleSpecialInput(value);
+          if (currentMode === "graph") {
+            handleGraphSpecialInput(value);
+          } else {
+            handleSpecialInput(value);
+          }
           break;
         case "new_scientific_function":
           handleNewScientificFunction(value);
@@ -192,12 +348,16 @@ const Calculator: React.FC = () => {
       isShiftActive,
       isAlphaActive,
       isCalculatorOn,
+      currentMode,
+      functionInput,
       playSoundForButtonType,
       turnOnCalculator,
       turnOffCalculator,
       toggleShift,
       toggleAlpha,
       resetModes,
+      toggleGraphMode,
+      handleCalculateGraph,
     ]
   );
 
@@ -631,18 +791,78 @@ const Calculator: React.FC = () => {
     }
   };
 
+  // Xử lý nhập liệu cho chế độ đồ thị
+  const handleGraphNumberInput = (value: string) => {
+    setFunctionInput((prev) => prev + value);
+  };
+
+  const handleGraphOperatorInput = (value: string) => {
+    let operator = value;
+    // Chuyển đổi các ký hiệu
+    if (value === "×") operator = "*";
+    if (value === "÷") operator = "/";
+    if (value === "−") operator = "-";
+    // Giữ nguyên ^ vì mathjs hỗ trợ
+
+    console.log(`📝 Graph operator input: ${value} -> ${operator}`);
+    setFunctionInput((prev) => prev + operator);
+  };
+
+  const handleGraphFunctionInput = (value: string) => {
+    let func = value;
+    // Xử lý các hàm đặc biệt
+    if (value === "sqrt(") func = "sqrt(";
+    if (value === "^2") func = "^2"; // Giữ nguyên ^2
+    if (value === "^3") func = "^3"; // Giữ nguyên ^3
+    if (value === "^") func = "^"; // Giữ nguyên ^
+
+    console.log(`📝 Graph function input: ${value} -> ${func}`);
+    setFunctionInput((prev) => prev + func);
+  };
+
+  const handleGraphSpecialInput = (value: string) => {
+    console.log("🔧 handleGraphSpecialInput called with:", value);
+    switch (value) {
+      case "clear":
+        setFunctionInput("x^2"); // Reset về hàm mẫu đơn giản với ^
+        calculateGraphPoints("x^2");
+        break;
+      case "backspace":
+        setFunctionInput((prev) => prev.slice(0, -1));
+        break;
+      case "calculate":
+        console.log("📊 Calculate button pressed in graph mode");
+        handleCalculateGraph();
+        break;
+      case "ans":
+        // Trong chế độ đồ thị, nút Ans sẽ thêm "x" vào hàm số
+        setFunctionInput((prev) => prev + "x");
+        break;
+      default:
+        break;
+    }
+  };
   return (
-    <div className="max-w-sm mx-auto bg-slate-700 rounded-3xl shadow-2xl overflow-hidden border-4 border-slate-800">
+    <div
+      className="w-full max-w-sm mx-auto bg-slate-700 rounded-3xl shadow-2xl overflow-hidden border-4 border-slate-800 
+                    sm:max-w-md md:max-w-lg lg:max-w-xl
+                    h-auto sm:min-h-0 sm:max-h-[96vh] lg:max-h-[92vh]
+                    my-0 sm:my-1 lg:my-4"
+    >
       {/* Header với branding CASIO */}
-      <div className="bg-slate-800 p-4 text-center">
-        <div className="flex justify-between items-start mb-3">
-          <div className="text-white font-bold text-lg">CASIO</div>
-          <div className="text-sm text-gray-300 italic">fx-570ES PLUS</div>
+      <div className="bg-slate-800 p-1 sm:p-2 lg:p-3 text-center">
+        <div className="flex justify-between items-start mb-1 sm:mb-1 lg:mb-2">
+          <div className="text-white font-bold text-sm sm:text-base lg:text-lg">
+            CASIO
+          </div>
+          <div className="text-xs sm:text-sm text-gray-300 italic">
+            fx-570ES PLUS
+          </div>
         </div>
 
         {/* Digital clock display */}
-        <div className="bg-black rounded px-4 py-2 inline-block mb-3">
-          <span className="text-red-400 font-mono text-xl font-bold">
+        <div className="bg-black rounded px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 inline-block mb-1 sm:mb-1 lg:mb-2">
+          <span className="text-red-400 font-mono text-sm sm:text-base lg:text-lg xl:text-xl font-bold">
             19:48:15
           </span>
         </div>
@@ -654,6 +874,9 @@ const Calculator: React.FC = () => {
         isShiftActive={isShiftActive}
         isAlphaActive={isAlphaActive}
         isCalculatorOn={isCalculatorOn}
+        currentMode={currentMode}
+        graphPoints={graphPoints}
+        functionInput={functionInput}
       />
       <Keypad onButtonClick={handleButtonClick} />
     </div>

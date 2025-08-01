@@ -6,9 +6,58 @@
 
 body {
   margin: 0;
+  padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+/* Desktop viewport optimization */
+@media screen and (min-width: 640px) {
+  body {
+    height: 100vh;
+    overflow: auto;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: auto;
+  }
+}
+
+/* Mobile viewport fix */
+@media screen and (max-width: 640px) {
+  body {
+    background: #1e293b;
+    overflow-y: auto; /* Allow scrolling on mobile only */
+    max-height: none;
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Disable text selection on buttons for better mobile experience */
+  button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Improve touch targets on mobile */
+@media (pointer: coarse) {
+  button {
+    min-height: 44px;
+  }
 }
