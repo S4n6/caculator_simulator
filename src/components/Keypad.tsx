@@ -37,9 +37,7 @@ interface ButtonConfig {
 }
 
 const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
-  // Layout theo hình ảnh Casio fx-350MS với bổ sung tất cả chức năng fx-570ES PLUS
   const buttons: ButtonConfig[] = [
-    // Hàng 0: SHIFT, ALPHA, MODE, ON
     {
       label: "SHIFT",
       value: "shift",
@@ -74,7 +72,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
     { label: "", value: "", type: "special", className: "invisible" },
     { label: "", value: "", type: "special", className: "invisible" },
 
-    // Hàng 1: CALC, SOLVE, ∫, d/dx, x⁻¹, log_base
     {
       label: "CALC",
       value: "calc",
@@ -124,7 +121,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       secondaryTextColor: "text-yellow-400",
     },
 
-    // Hàng 2: (-), ENG, (, ), S⇔D, nPr
     {
       label: "(-)",
       value: "negate",
@@ -170,7 +166,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       secondaryTextColor: "text-red-400",
     },
 
-    // Hàng 3: x!, √, x², log, ln, sin
     {
       label: "x!",
       value: "!",
@@ -224,7 +219,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       secondaryTextColor: "text-yellow-400",
     },
 
-    // Hàng 4: STO, RCL, CONST, CONV, CLR, cos
     {
       label: "STO",
       value: "sto",
@@ -270,7 +264,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       secondaryTextColor: "text-yellow-400",
     },
 
-    // Hàng 5: 7, 8, 9, DEL, AC, tan
     {
       label: "7",
       value: "7",
@@ -320,7 +313,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       secondaryTextColor: "text-yellow-400",
     },
 
-    // Hàng 6: 4, 5, 6, ×, ÷, ∧
     {
       label: "4",
       value: "4",
@@ -364,7 +356,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
         "bg-gray-500 hover:bg-gray-600 text-white text-sm font-bold border border-gray-400 rounded-md shadow-md active:brightness-90",
     },
 
-    // Hàng 7: 1, 2, 3, +, -, √ʸ
     {
       label: "1",
       value: "1",
@@ -408,7 +399,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
         "bg-gray-500 hover:bg-gray-600 text-white text-xs font-bold border border-gray-400 rounded-md shadow-md active:brightness-90",
     },
 
-    // Hàng 8: 0, ., ×10ˣ, Ans, =, M+
     {
       label: "0",
       value: "0",
@@ -485,7 +475,6 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
 
   return (
     <div className="bg-slate-700 p-1 sm:p-1 lg:p-1.5 xl:p-1.5 rounded-b-3xl">
-      {/* Grid layout thống nhất 6 cột cho tất cả các hàng - responsive */}
       <div className="grid grid-cols-6 gap-1 sm:gap-1 lg:gap-1.5">
         {buttons.map((button, index) => renderButton(button, index))}
       </div>
