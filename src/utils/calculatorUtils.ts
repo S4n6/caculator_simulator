@@ -96,13 +96,13 @@ export const logBase = (base: number, value: number): number => {
 
 // Hàm tích phân đơn giản (numerical integration - trapezoidal rule)
 export const integral = (
-  expression: string,
+  _expression: string, // Tham số dành cho tương lai khi implement parser
   start: number = 0,
   end: number = 1,
   steps: number = 1000
 ): number => {
   // Đây là implementation đơn giản cho demo
-  // Trong thực tế sẽ cần parser phức tạp hơn
+  // Trong thực tế sẽ cần parser phức tạp hơn để parse expression
   const h = (end - start) / steps;
   let sum = 0;
 
@@ -119,12 +119,12 @@ export const integral = (
 
 // Hàm đạo hàm đơn giản (numerical differentiation)
 export const derivative = (
-  expression: string,
+  _expression: string, // Tham số dành cho tương lai khi implement parser
   point: number = 0,
-  h: number = 1e-8
+  _h: number = 1e-8 // Tham số dành cho numerical differentiation method
 ): number => {
   // Đây là implementation đơn giản cho demo
-  // Trong thực tế sẽ cần parser phức tạp hơn
+  // Trong thực tế sẽ cần parser phức tạp hơn để parse expression
 
   // Đơn giản hóa: giả sử expression là x^2, đạo hàm là 2x
   return 2 * point;

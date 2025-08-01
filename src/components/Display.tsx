@@ -48,8 +48,9 @@ const Display: React.FC<DisplayProps> = ({
           </span>
         )}
         {currentMode === "graph" && (
-          <span className="bg-green-600 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-bold">
-            GRAPH
+          <span className="bg-green-600 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-bold flex items-center gap-1">
+            <span>GRAPH</span>
+            <span className="text-yellow-300 font-bold">x</span>
           </span>
         )}
       </div>

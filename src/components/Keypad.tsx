@@ -14,6 +14,7 @@ interface KeypadProps {
       | "scientific_function_trig_row"
       | "new_scientific_function"
   ) => void;
+  currentMode?: "calculator" | "graph";
 }
 
 interface ButtonConfig {
@@ -36,7 +37,46 @@ interface ButtonConfig {
   secondaryTextColor?: string;
 }
 
-const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
+const Keypad: React.FC<KeypadProps> = ({
+  onButtonClick,
+  currentMode = "calculator",
+}) => {
+  // Hàm xác định nhãn nút dựa trên chế độ hiện tại
+  const getButtonLabel = (
+    originalLabel: string,
+    originalValue: string,
+    mode: string
+  ) => {
+    if (mode === "graph") {
+      switch (originalValue) {
+        case "e_notation":
+          return "𝒙";
+        case "^":
+          return "^";
+        default:
+          return originalLabel;
+      }
+    }
+    return originalLabel;
+  };
+
+  // Hàm xác định value nút dựa trên chế độ
+  const getButtonValue = (originalValue: string, mode: string) => {
+    if (mode === "graph") {
+      switch (originalValue) {
+        case "e_notation":
+          return "x";
+        default:
+          return originalValue;
+      }
+    }
+    return originalValue;
+  };
+
+  // Hàm kiểm tra nút có highlight trong graph mode không
+  const isHighlightedInGraphMode = (value: string, mode: string) => {
+    return mode === "graph" && (value === "e_notation" || value === "^");
+  };
   const buttons: ButtonConfig[] = [
     {
       label: "SHIFT",
@@ -443,15 +483,36 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       return <div key={index} className="invisible"></div>;
     }
 
+    const displayLabel = getButtonLabel(
+      button.label,
+      button.value,
+      currentMode
+    );
+    const displayValue = getButtonValue(button.value, currentMode);
+    const isHighlighted = isHighlightedInGraphMode(button.value, currentMode);
+
+    const buttonClass = `h-8 sm:h-9 lg:h-10 xl:h-11 ${
+      button.className
+    } transition-colors duration-150 flex flex-col items-center justify-center relative text-xs sm:text-sm lg:text-sm ${
+      isHighlighted
+        ? "ring-2 ring-blue-400 bg-blue-50 text-blue-700 font-semibold"
+        : ""
+    }`;
+
     return (
       <button
         key={index}
-        onClick={() => onButtonClick(button.value, button.type)}
-        className={`h-8 sm:h-9 lg:h-10 xl:h-11 ${button.className} transition-colors duration-150 flex flex-col items-center justify-center relative text-xs sm:text-sm lg:text-sm`}
+        onClick={() => onButtonClick(displayValue, button.type)}
+        className={buttonClass}
         style={{
           gridColumn: button.colSpan ? `span ${button.colSpan}` : "span 1",
           gridRow: button.rowSpan ? `span ${button.rowSpan}` : "span 1",
         }}
+        title={
+          currentMode === "graph" && isHighlighted
+            ? "Graph mode variable"
+            : button.label
+        }
       >
         {button.secondaryText && (
           <span
@@ -467,7 +528,7 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
               : "text-xs sm:text-sm lg:text-sm"
           }
         >
-          {button.label}
+          {displayLabel}
         </span>
       </button>
     );

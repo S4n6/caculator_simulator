@@ -891,7 +891,7 @@ const Calculator: React.FC = () => {
         graphPoints={graphPoints}
         functionInput={functionInput}
       />
-      <Keypad onButtonClick={handleButtonClick} />
+      <Keypad onButtonClick={handleButtonClick} currentMode={currentMode} />
     </div>
   );
 };
