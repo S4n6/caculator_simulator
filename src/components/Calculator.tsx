@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from "react";
 import Display from "./Display";
 import Keypad from "./Keypad";
+import { clickSound } from "../utils/clickSound";
 import {
   evaluateExpression,
   canAddOperator,
   canAddNumber,
   formatExpression,
+  convertBetweenFractionAndDecimal,
 } from "../utils/calculatorUtils";
 
 const Calculator: React.FC = () => {
@@ -13,25 +15,83 @@ const Calculator: React.FC = () => {
   const [result, setResult] = useState<string>("0");
   const [isNewCalculation, setIsNewCalculation] = useState<boolean>(true);
 
+  // Thêm state để lưu câu trả lời cuối cùng cho nút Ans
+  const [lastAnswer, setLastAnswer] = useState<string>("0");
+
   // Thêm state cho chế độ SHIFT và ALPHA
   const [isShiftActive, setIsShiftActive] = useState<boolean>(false);
   const [isAlphaActive, setIsAlphaActive] = useState<boolean>(false);
 
+  // Thêm state cho trạng thái máy tính (bật/tắt)
+  const [isCalculatorOn, setIsCalculatorOn] = useState<boolean>(true);
+
+  // Hàm phát âm thanh theo loại nút
+  const playSoundForButtonType = useCallback((type: string) => {
+    switch (type) {
+      case "number":
+        clickSound.playNumberClick();
+        break;
+      case "operator":
+        clickSound.playOperatorClick();
+        break;
+      case "function":
+      case "scientific_function_top_row":
+      case "scientific_function_trig_row":
+      case "new_scientific_function":
+        clickSound.playFunctionClick();
+        break;
+      case "special":
+      case "control":
+      case "mode":
+        clickSound.playSpecialClick();
+        break;
+      default:
+        clickSound.playNumberClick();
+        break;
+    }
+  }, []);
+
   // Hàm toggle các chế độ
   const toggleShift = useCallback(() => {
+    if (!isCalculatorOn) return; // Không hoạt động khi máy tắt
     setIsShiftActive(!isShiftActive);
     setIsAlphaActive(false); // Tắt Alpha khi bật Shift
-  }, [isShiftActive]);
+  }, [isShiftActive, isCalculatorOn]);
 
   const toggleAlpha = useCallback(() => {
+    if (!isCalculatorOn) return; // Không hoạt động khi máy tắt
     setIsAlphaActive(!isAlphaActive);
     setIsShiftActive(false); // Tắt Shift khi bật Alpha
-  }, [isAlphaActive]);
+  }, [isAlphaActive, isCalculatorOn]);
 
   const resetModes = useCallback(() => {
     setIsShiftActive(false);
     setIsAlphaActive(false);
   }, []);
+
+  // Hàm tắt máy tính
+  const turnOffCalculator = useCallback(() => {
+    console.log("🔴 Turning OFF calculator");
+    setIsCalculatorOn(false);
+    setExpression("");
+    setResult("0");
+    setLastAnswer("0");
+    setIsNewCalculation(true);
+    resetModes();
+    clickSound.playSpecialClick(); // Âm thanh tắt máy
+  }, [resetModes]);
+
+  // Hàm bật máy tính
+  const turnOnCalculator = useCallback(() => {
+    console.log("🟢 Turning ON calculator");
+    setIsCalculatorOn(true);
+    setExpression("");
+    setResult("0");
+    setLastAnswer("0");
+    setIsNewCalculation(true);
+    resetModes();
+    clickSound.playSpecialClick(); // Âm thanh bật máy
+  }, [resetModes]);
 
   // Xử lý khi nhấn nút với logic SHIFT/ALPHA
   const handleButtonClick = useCallback(
@@ -48,7 +108,26 @@ const Calculator: React.FC = () => {
         | "scientific_function_trig_row"
         | "new_scientific_function"
     ) => {
-      // Xử lý nút SHIFT và ALPHA chuyên dụng
+      if (value === "power_on") {
+        if (!isCalculatorOn) {
+          turnOnCalculator();
+        } else {
+          console.log("🔄 ON button acting as AC (clear)");
+          setExpression("");
+          setResult("0");
+          setIsNewCalculation(true);
+          resetModes();
+          playSoundForButtonType("special");
+        }
+        return;
+      }
+
+      if (!isCalculatorOn) {
+        return;
+      }
+
+      playSoundForButtonType(type);
+
       if (value === "shift") {
         toggleShift();
         return;
@@ -60,8 +139,12 @@ const Calculator: React.FC = () => {
       }
 
       if (value === "mode") {
-        // Reset cả hai chế độ
         resetModes();
+        return;
+      }
+
+      if (isShiftActive && value === "clear") {
+        turnOffCalculator();
         return;
       }
 
@@ -102,7 +185,20 @@ const Calculator: React.FC = () => {
           break;
       }
     },
-    [expression, result, isNewCalculation, isShiftActive, isAlphaActive]
+    [
+      expression,
+      result,
+      isNewCalculation,
+      isShiftActive,
+      isAlphaActive,
+      isCalculatorOn,
+      playSoundForButtonType,
+      turnOnCalculator,
+      turnOffCalculator,
+      toggleShift,
+      toggleAlpha,
+      resetModes,
+    ]
   );
 
   // Xử lý các chức năng khoa học mới từ fx-570ES PLUS
@@ -159,9 +255,19 @@ const Calculator: React.FC = () => {
         }
         break;
       case "s_d_conversion":
-        // Standard to Decimal conversion
-        setExpression("S⇔D:");
-        setResult("Conversion mode");
+        if (
+          result !== "0" &&
+          result !== "Lỗi" &&
+          result !== "Select constant" &&
+          result !== "Conversion mode"
+        ) {
+          const convertedResult = convertBetweenFractionAndDecimal(result);
+          setResult(convertedResult);
+          setExpression(convertedResult);
+          setIsNewCalculation(true);
+        } else {
+          setResult("No value to convert");
+        }
         break;
       case "npr":
         // Hoán vị nPr
@@ -205,20 +311,16 @@ const Calculator: React.FC = () => {
         setResult("Memory cleared");
         break;
       case "e_notation":
-        // Scientific notation ×10ˣ
-        if (!isNewCalculation && expression) {
-          setExpression(expression + "×10^");
-        }
-        break;
-      case "ans":
-        // Answer/Result recall
-        if (result !== "0" && result !== "Lỗi") {
-          if (isNewCalculation) {
-            setExpression(result);
-            setIsNewCalculation(false);
-          } else {
-            setExpression(expression + result);
-          }
+        if (isNewCalculation && result !== "0" && result !== "Lỗi") {
+          const newExpr = result + "E";
+          setExpression(newExpr);
+          setIsNewCalculation(false);
+        } else if (expression && /[\d\.]$/.test(expression)) {
+          const newExpr = expression + "E";
+          setExpression(newExpr);
+        } else if (!expression || expression === "0") {
+          setExpression("1E");
+          setIsNewCalculation(false);
         }
         break;
       case "yroot":
@@ -315,6 +417,7 @@ const Calculator: React.FC = () => {
       case "÷":
         handleOperatorInput("^"); // SHIFT + ÷ = x^y
         break;
+
       default:
         // Xử lý bình thường nếu không có chức năng SHIFT đặc biệt
         switch (type) {
@@ -395,7 +498,7 @@ const Calculator: React.FC = () => {
 
         // Tính toán realtime nếu biểu thức hợp lệ
         try {
-          const newResult = evaluateExpression(newExpression);
+          const newResult = evaluateExpression(newExpression, lastAnswer);
           if (newResult !== "Lỗi") {
             setResult(newResult);
           }
@@ -432,7 +535,7 @@ const Calculator: React.FC = () => {
         const newExpression = expression + value;
         setExpression(newExpression);
         try {
-          const newResult = evaluateExpression(newExpression);
+          const newResult = evaluateExpression(newExpression, lastAnswer);
           setResult(newResult);
         } catch {
           setResult("Lỗi");
@@ -470,13 +573,27 @@ const Calculator: React.FC = () => {
             setIsNewCalculation(true);
           } else {
             try {
-              const newResult = evaluateExpression(newExpression);
+              const newResult = evaluateExpression(newExpression, lastAnswer);
               if (newResult !== "Lỗi") {
                 setResult(newResult);
               }
             } catch {
               // Giữ nguyên result nếu biểu thức chưa hoàn chỉnh
             }
+          }
+        }
+        break;
+
+      case "ans":
+        console.log("🔄 Recalling last answer:", lastAnswer);
+        // Answer/Result recall - hiển thị "Ans" trên màn hình
+        if (lastAnswer !== "0" && lastAnswer !== "Lỗi" && lastAnswer !== "") {
+          if (isNewCalculation) {
+            setExpression("Ans");
+            setResult(lastAnswer); // Hiển thị giá trị thực tế ở result
+            setIsNewCalculation(false);
+          } else {
+            setExpression(expression + "Ans");
           }
         }
         break;
@@ -502,8 +619,12 @@ const Calculator: React.FC = () => {
 
       case "calculate":
         if (expression && !isNewCalculation) {
-          const finalResult = evaluateExpression(expression);
+          const finalResult = evaluateExpression(expression, lastAnswer);
           setResult(finalResult);
+          // Lưu kết quả vào lastAnswer nếu hợp lệ
+          if (finalResult !== "Lỗi" && finalResult !== "") {
+            setLastAnswer(finalResult);
+          }
           setIsNewCalculation(true);
         }
         break;
@@ -516,7 +637,7 @@ const Calculator: React.FC = () => {
       <div className="bg-slate-800 p-4 text-center">
         <div className="flex justify-between items-start mb-3">
           <div className="text-white font-bold text-lg">CASIO</div>
-          <div className="text-sm text-gray-300 italic">fx-350MS</div>
+          <div className="text-sm text-gray-300 italic">fx-570ES PLUS</div>
         </div>
 
         {/* Digital clock display */}
@@ -532,6 +653,7 @@ const Calculator: React.FC = () => {
         result={result}
         isShiftActive={isShiftActive}
         isAlphaActive={isAlphaActive}
+        isCalculatorOn={isCalculatorOn}
       />
       <Keypad onButtonClick={handleButtonClick} />
     </div>

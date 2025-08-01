@@ -39,7 +39,7 @@ interface ButtonConfig {
 const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
   // Layout theo hình ảnh Casio fx-350MS với bổ sung tất cả chức năng fx-570ES PLUS
   const buttons: ButtonConfig[] = [
-    // Hàng 0: SHIFT, ALPHA, MODE
+    // Hàng 0: SHIFT, ALPHA, MODE, ON
     {
       label: "SHIFT",
       value: "shift",
@@ -61,8 +61,14 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
       className:
         "bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold border border-purple-400 rounded-md shadow-md active:brightness-90",
     },
-    // 3 ô trống để căn chỉnh
-    { label: "", value: "", type: "special", className: "invisible" },
+    {
+      label: "ON",
+      value: "power_on",
+      type: "special",
+      className:
+        "bg-green-600 hover:bg-green-700 text-white text-xs font-bold border border-green-500 rounded-md shadow-md active:brightness-90",
+    },
+    // 2 ô trống để căn chỉnh
     { label: "", value: "", type: "special", className: "invisible" },
     { label: "", value: "", type: "special", className: "invisible" },
 
@@ -419,7 +425,7 @@ const Keypad: React.FC<KeypadProps> = ({ onButtonClick }) => {
     {
       label: "×10ˣ",
       value: "e_notation",
-      type: "function",
+      type: "new_scientific_function",
       className:
         "bg-gray-500 hover:bg-gray-600 text-white text-xs font-bold border border-gray-400 rounded-md shadow-md active:brightness-90",
     },

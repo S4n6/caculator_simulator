@@ -5,10 +5,14 @@ export const preprocessExpression = (expression: string): string => {
   let processed = expression
     // Thay thế các ký hiệu đặc biệt
     .replace(/π/g, Math.PI.toString())
-    .replace(/e(?![0-9])/g, Math.E.toString())
     .replace(/×/g, "*")
     .replace(/÷/g, "/")
     .replace(/−/g, "-")
+    // Xử lý Scientific Notation E → *10^
+    .replace(/(\d+\.?\d*)E([+-]?\d+)/g, "($1*Math.pow(10,$2))")
+    .replace(/(\d+\.?\d*)E(\d+)/g, "($1*Math.pow(10,$2))")
+    // Xử lý hằng số e (QUAN TRỌNG: Sau khi xử lý E notation)
+    .replace(/(?<!\w)e(?![a-zA-Z_])/g, "Math.E")
     // Xử lý hàm khoa học cơ bản
     .replace(/sin\(/g, "Math.sin(")
     .replace(/cos\(/g, "Math.cos(")
@@ -39,7 +43,18 @@ export const preprocessExpression = (expression: string): string => {
     // Xử lý lũy thừa
     .replace(/\^2/g, "**2")
     .replace(/\^3/g, "**3")
-    .replace(/\^/g, "**");
+    .replace(/\^/g, "**")
+
+    // Xử lý hằng số
+    .replace(/π/g, "Math.PI")
+    .replace(/e(?![a-zA-Z])/g, "Math.E")
+
+    // Xử lý phép nhân ngầm định
+    .replace(/(\d)\(/g, "$1*(")
+    .replace(/\)(\d)/g, ")*$1")
+    .replace(/(\d)(π|Math\.PI|Math\.E)/g, "$1*$2");
+
+  console.log("🔧 preprocessExpression output:", processed);
 
   return processed;
 };
@@ -125,14 +140,20 @@ export const processFactorial = (expression: string): string => {
 };
 
 // Đánh giá biểu thức một cách an toàn
-export const evaluateExpression = (expression: string): string => {
+export const evaluateExpression = (
+  expression: string,
+  lastAnswer: string = "0"
+): string => {
   try {
     if (!expression || expression.trim() === "") {
       return "0";
     }
 
+    // Thay thế "Ans" bằng giá trị lastAnswer
+    let processed = expression.replace(/Ans/g, lastAnswer);
+
     // Xử lý giai thừa trước
-    let processed = processFactorial(expression);
+    processed = processFactorial(processed);
 
     // Tiền xử lý biểu thức
     processed = preprocessExpression(processed);
@@ -206,4 +227,115 @@ export const canAddNumber = (expression: string): boolean => {
 // Định dạng biểu thức hiển thị
 export const formatExpression = (expression: string): string => {
   return expression.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−");
+};
+
+// Tìm ước chung lớn nhất (GCD)
+export const gcd = (a: number, b: number): number => {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b !== 0) {
+    const temp = b;
+    b = a % b;
+    a = temp;
+  }
+  return a;
+};
+
+// Chuyển số thập phân thành phân số
+export const decimalToFraction = (decimal: number): string => {
+  if (Number.isInteger(decimal)) {
+    return decimal.toString();
+  }
+
+  const isNegative = decimal < 0;
+  decimal = Math.abs(decimal);
+
+  // Xử lý số thập phân với độ chính xác hạn chế
+  const tolerance = 1e-10;
+  let denominator = 1;
+  let numerator = decimal;
+
+  // Tìm mẫu số phù hợp
+  while (
+    Math.abs(numerator - Math.round(numerator)) > tolerance &&
+    denominator < 10000
+  ) {
+    denominator++;
+    numerator = decimal * denominator;
+  }
+
+  numerator = Math.round(numerator);
+
+  // Rút gọn phân số
+  const divisor = gcd(numerator, denominator);
+  numerator = numerator / divisor;
+  denominator = denominator / divisor;
+
+  // Nếu mẫu số là 1, trả về số nguyên
+  if (denominator === 1) {
+    return isNegative ? (-numerator).toString() : numerator.toString();
+  }
+
+  // Trả về phân số
+  const result = `${numerator}/${denominator}`;
+  return isNegative ? `-${result}` : result;
+};
+
+// Chuyển phân số thành số thập phân
+export const fractionToDecimal = (fraction: string): string => {
+  // Kiểm tra xem có phải là phân số không
+  if (!fraction.includes("/")) {
+    return fraction;
+  }
+
+  try {
+    const isNegative = fraction.startsWith("-");
+    const cleanFraction = fraction.replace("-", "");
+    const parts = cleanFraction.split("/");
+
+    if (parts.length !== 2) {
+      return fraction;
+    }
+
+    const numerator = parseFloat(parts[0]);
+    const denominator = parseFloat(parts[1]);
+
+    if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+      return fraction;
+    }
+
+    const result = numerator / denominator;
+    const finalResult = isNegative ? -result : result;
+
+    // Làm tròn đến 10 chữ số thập phân
+    const rounded = Math.round(finalResult * 1e10) / 1e10;
+
+    return rounded.toString();
+  } catch (error) {
+    return fraction;
+  }
+};
+
+// Chuyển đổi giữa phân số và số thập phân
+export const convertBetweenFractionAndDecimal = (value: string): string => {
+  if (!value || value === "0" || value === "Lỗi") {
+    return value;
+  }
+
+  // Nếu là phân số, chuyển thành số thập phân
+  if (value.includes("/")) {
+    const decimal = fractionToDecimal(value);
+    console.log(`🔄 Fraction to decimal: ${value} → ${decimal}`);
+    return decimal;
+  }
+
+  // Nếu là số thập phân, chuyển thành phân số
+  const num = parseFloat(value);
+  if (!isNaN(num)) {
+    const fraction = decimalToFraction(num);
+    console.log(`🔄 Decimal to fraction: ${value} → ${fraction}`);
+    return fraction;
+  }
+
+  return value;
 };

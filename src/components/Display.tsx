@@ -5,6 +5,7 @@ interface DisplayProps {
   result: string;
   isShiftActive?: boolean;
   isAlphaActive?: boolean;
+  isCalculatorOn?: boolean;
 }
 
 const Display: React.FC<DisplayProps> = ({
@@ -12,7 +13,19 @@ const Display: React.FC<DisplayProps> = ({
   result,
   isShiftActive = false,
   isAlphaActive = false,
+  isCalculatorOn = true,
 }) => {
+  // When calculator is off, show blank screen
+  if (!isCalculatorOn) {
+    return (
+      <div className="bg-green-100 border-2 border-green-200 rounded-lg mx-4 mt-2 mb-4 p-4 relative min-h-[90px]">
+        <div className="bg-black text-white font-mono p-3 rounded min-h-[60px]">
+          {/* Blank display when off */}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-green-100 border-2 border-green-200 rounded-lg mx-4 mt-2 mb-4 p-4 relative min-h-[90px]">
       {/* Chỉ báo SHIFT/ALPHA */}
