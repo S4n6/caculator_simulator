@@ -13,14 +13,17 @@ const GraphArea: React.FC<GraphAreaProps> = ({ graphPoints }) => {
     if (typeof window !== "undefined") {
       const screenWidth = window.innerWidth;
       if (screenWidth < 640) {
-        // Mobile: smaller canvas
-        return { width: 260, height: 100 };
+        // Mobile: very compact canvas
+        return { width: 160, height: 70 };
+      } else if (screenWidth < 1024) {
+        // Tablet
+        return { width: 260, height: 130 };
       } else {
-        // Desktop: original size
-        return { width: 280, height: 120 };
+        // Desktop: larger canvas
+        return { width: 300, height: 130 };
       }
     }
-    return { width: 280, height: 120 };
+    return { width: 300, height: 130 };
   };
 
   const [canvasSize, setCanvasSize] = React.useState(getCanvasSize());
@@ -200,7 +203,7 @@ const GraphArea: React.FC<GraphAreaProps> = ({ graphPoints }) => {
   }, [graphPoints, canvasSize]);
 
   return (
-    <div className="bg-black border border-gray-600 rounded flex items-center justify-center">
+    <div className="bg-black border border-gray-600 rounded flex items-center justify-center h-[70px] sm:h-[130px] lg:h-[130px]">
       <canvas
         ref={canvasRef}
         width={canvasSize.width}

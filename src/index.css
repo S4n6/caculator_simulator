@@ -33,8 +33,19 @@ body {
 @media screen and (max-width: 640px) {
   body {
     background: #1e293b;
-    overflow-y: auto; /* Allow scrolling on mobile only */
-    max-height: none;
+    overflow: hidden; /* Prevent scrolling - fit everything in viewport */
+    max-height: 100vh;
+    min-height: 100vh;
+    height: 100vh;
+    padding: 0;
+  }
+
+  /* Calculator should fit in viewport */
+  #root {
+    height: 100vh;
+    overflow: hidden; /* No scrolling needed */
+    max-height: 100vh;
+    padding: 0;
   }
 
   /* Prevent zoom on input focus on iOS */
@@ -59,5 +70,131 @@ body {
 @media (pointer: coarse) {
   button {
     min-height: 44px;
+  }
+}
+
+/* Opening Animation Keyframes */
+@keyframes assemblySlideIn {
+  from {
+    transform: translateY(100px) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes logoFlyIn {
+  from {
+    transform: translateX(-100px) translateY(-50px) rotate(-10deg) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes screenGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.4);
+  }
+}
+
+@keyframes buttonPop {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+}
+
+/* Apply animations */
+.assembly-slide-in {
+  animation: assemblySlideIn 0.8s ease-out forwards;
+}
+
+.logo-fly-in {
+  animation: logoFlyIn 0.6s ease-out forwards;
+}
+
+.screen-glow {
+  animation: screenGlow 2s ease-in-out infinite;
+}
+
+.button-pop {
+  animation: buttonPop 0.4s ease-out forwards;
+}
+
+.sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Pixel Cat Walking Animation */
+@keyframes pixel-cat-walk {
+  0% {
+    transform: translateX(calc(-100% - 30px));
+  }
+  100% {
+    transform: translateX(calc(320px + 30px));
+  }
+}
+
+.pixel-cat-walk {
+  animation: pixel-cat-walk 8s linear infinite alternate;
+}
+
+/* Responsive animation adjustments */
+@media screen and (max-width: 640px) {
+  @keyframes pixel-cat-walk {
+    0% {
+      transform: translateX(calc(-100% - 20px));
+    }
+    100% {
+      transform: translateX(calc(250px + 20px));
+    }
+  }
+
+  .pixel-cat-walk {
+    animation: pixel-cat-walk 6s linear infinite alternate;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  @keyframes pixel-cat-walk {
+    0% {
+      transform: translateX(calc(-100% - 40px));
+    }
+    100% {
+      transform: translateX(calc(400px + 40px));
+    }
+  }
+
+  .pixel-cat-walk {
+    animation: pixel-cat-walk 10s linear infinite alternate;
   }
 }

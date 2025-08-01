@@ -34,9 +34,9 @@ const Display: React.FC<DisplayProps> = ({
   }
 
   return (
-    <div className="bg-green-100 border-2 border-green-200 rounded-lg mx-2 sm:mx-4 mt-1 mb-1 sm:mb-2 p-2 sm:p-3 relative min-h-[60px] sm:min-h-[70px]">
+    <div className="bg-green-100 border-2 border-green-200 rounded-lg mx-2 sm:mx-4 mt-0 mb-0 p-1 sm:p-2 relative min-h-[50px] sm:min-h-[60px]">
       {/* Chỉ báo SHIFT/ALPHA */}
-      <div className="absolute top-1 sm:top-2 left-2 sm:left-3 flex gap-1 sm:gap-2">
+      <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2">
         {isShiftActive && (
           <span className="bg-orange-500 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-bold">
             SHIFT
@@ -56,9 +56,9 @@ const Display: React.FC<DisplayProps> = ({
 
       {/* Hiển thị theo chế độ */}
       {currentMode === "graph" ? (
-        <div className="mt-3 sm:mt-4 lg:mt-6">
+        <div className="mt-3 sm:mt-4 lg:mt-5">
           {/* Dòng hiển thị hàm số */}
-          <div className="text-left text-xs sm:text-sm text-gray-700 mb-1 sm:mb-2">
+          <div className="text-left text-xs sm:text-sm text-gray-700 mb-1 sm:mb-1">
             <span className="font-semibold">Graph: y = </span>
             <span className="font-mono">{functionInput || "..."}</span>
           </div>

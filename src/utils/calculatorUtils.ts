@@ -9,8 +9,8 @@ export const preprocessExpression = (expression: string): string => {
     .replace(/÷/g, "/")
     .replace(/−/g, "-")
     // Xử lý Scientific Notation E → *10^
+    // Chỉ xử lý khi có số mũ đầy đủ
     .replace(/(\d+\.?\d*)E([+-]?\d+)/g, "($1*Math.pow(10,$2))")
-    .replace(/(\d+\.?\d*)E(\d+)/g, "($1*Math.pow(10,$2))")
     // Xử lý hằng số e (QUAN TRỌNG: Sau khi xử lý E notation)
     .replace(/(?<!\w)e(?![a-zA-Z_])/g, "Math.E")
     // Xử lý hàm khoa học cơ bản
@@ -147,6 +147,27 @@ export const evaluateExpression = (
   try {
     if (!expression || expression.trim() === "") {
       return "0";
+    }
+
+    // Kiểm tra biểu thức có hợp lệ không
+    // Nếu kết thúc bằng "E" hoặc "E-" hoặc "E+" thì chưa hoàn thành
+    if (/\dE[+-]?$/.test(expression.trim())) {
+      return expression; // Trả về biểu thức gốc, chưa tính toán
+    }
+
+    // Kiểm tra các trường hợp biểu thức không hợp lệ khác
+    const trimmed = expression.trim();
+
+    // Kiểm tra kết thúc bằng toán tử
+    if (/[+\-*/^×÷−]$/.test(trimmed)) {
+      throw new Error("Biểu thức kết thúc bằng toán tử");
+    }
+
+    // Kiểm tra dấu ngoặc không cân bằng
+    const openParens = (trimmed.match(/\(/g) || []).length;
+    const closeParens = (trimmed.match(/\)/g) || []).length;
+    if (openParens !== closeParens) {
+      throw new Error("Dấu ngoặc không cân bằng");
     }
 
     // Thay thế "Ans" bằng giá trị lastAnswer

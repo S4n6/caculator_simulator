@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import Display from "./Display";
 import Keypad from "./Keypad";
+import WalkingCatAnimation from "./WalkingCatAnimation";
 import { clickSound } from "../utils/clickSound";
 import {
   evaluateExpression,
@@ -657,13 +658,16 @@ const Calculator: React.FC = () => {
         setExpression(newExpression);
 
         // Tính toán realtime nếu biểu thức hợp lệ
-        try {
-          const newResult = evaluateExpression(newExpression, lastAnswer);
-          if (newResult !== "Lỗi") {
-            setResult(newResult);
+        // Không tính toán nếu kết thúc bằng E (scientific notation chưa hoàn thành)
+        if (!/\dE[+-]?$/.test(newExpression)) {
+          try {
+            const newResult = evaluateExpression(newExpression, lastAnswer);
+            if (newResult !== "Lỗi" && newResult !== newExpression) {
+              setResult(newResult);
+            }
+          } catch {
+            // Không làm gì nếu biểu thức chưa hoàn chỉnh
           }
-        } catch {
-          // Không làm gì nếu biểu thức chưa hoàn chỉnh
         }
       }
     }
@@ -779,10 +783,21 @@ const Calculator: React.FC = () => {
 
       case "calculate":
         if (expression && !isNewCalculation) {
+          // Kiểm tra biểu thức có hợp lệ không trước khi tính toán
+          // Nếu kết thúc bằng "E" hoặc "E-" hoặc "E+" thì chưa hoàn thành
+          if (/\dE[+-]?$/.test(expression.trim())) {
+            setResult("Incomplete expression");
+            return;
+          }
+
           const finalResult = evaluateExpression(expression, lastAnswer);
           setResult(finalResult);
           // Lưu kết quả vào lastAnswer nếu hợp lệ
-          if (finalResult !== "Lỗi" && finalResult !== "") {
+          if (
+            finalResult !== "Lỗi" &&
+            finalResult !== "" &&
+            finalResult !== expression
+          ) {
             setLastAnswer(finalResult);
           }
           setIsNewCalculation(true);
@@ -846,12 +861,12 @@ const Calculator: React.FC = () => {
     <div
       className="w-full max-w-sm mx-auto bg-slate-700 rounded-3xl shadow-2xl overflow-hidden border-4 border-slate-800 
                     sm:max-w-md md:max-w-lg lg:max-w-xl
-                    h-auto sm:min-h-0 sm:max-h-[96vh] lg:max-h-[92vh]
-                    my-0 sm:my-1 lg:my-4"
+                    h-auto min-h-0 max-h-[92vh] 
+                    my-0 sm:my-1 lg:my-1"
     >
       {/* Header với branding CASIO */}
-      <div className="bg-slate-800 p-1 sm:p-2 lg:p-3 text-center">
-        <div className="flex justify-between items-start mb-1 sm:mb-1 lg:mb-2">
+      <div className="bg-slate-800 p-1 sm:p-1 lg:p-2 text-center">
+        <div className="flex justify-between items-start mb-1 sm:mb-1 lg:mb-1">
           <div className="text-white font-bold text-sm sm:text-base lg:text-lg">
             CASIO
           </div>
@@ -860,11 +875,9 @@ const Calculator: React.FC = () => {
           </div>
         </div>
 
-        {/* Digital clock display */}
-        <div className="bg-black rounded px-2 sm:px-3 lg:px-4 py-0.5 sm:py-1 inline-block mb-1 sm:mb-1 lg:mb-2">
-          <span className="text-red-400 font-mono text-sm sm:text-base lg:text-lg xl:text-xl font-bold">
-            19:48:15
-          </span>
+        {/* Pixel cat animation */}
+        <div className="relative bg-white rounded px-1 py-1 inline-block mb-1 sm:mb-2 lg:mb-3 overflow-hidden w-full max-w-xs mx-auto">
+          <WalkingCatAnimation />
         </div>
       </div>
 
